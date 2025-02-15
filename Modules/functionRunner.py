@@ -1,8 +1,10 @@
 import ImagePostProcessing as IMP
 import matplotlib.pyplot as plt
+from skimage import io
 
 pathTest = 'Parrot.jpg'
-output_image = IMP.color_quantize(pathTest)
+original = io.imread(pathTest)
+output_image = IMP.color_quantize(original)
 
 plt.imshow(output_image)
 plt.axis('off')
