@@ -6,9 +6,8 @@ import time
 
 benchmark = False
 
-# Posterizes the jpg and returns the posterized image
-def color_quantize(filePath):
-    original = io.imread(filePath)
+# Posterizes the image and returns it
+def color_quantize(original):
     n_colors = 10
 
     start_time = time.time()
@@ -25,3 +24,4 @@ def color_quantize(filePath):
         print("My program took", end_time - start_time, "seconds to run")
 
     return less_colors # PROCESSED STUFF IMAGE
+
