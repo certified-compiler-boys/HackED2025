@@ -43,13 +43,14 @@ def gaussian_blur(original, blurStrength = 1):
 def greyscale(original):
     start_time = time.time()
 
-    grayscale_img = color.rgb2gray(original)  
+    grayscale_img = color.rgb2gray(original)
+    grey_image_rgb = np.stack([grayscale_img] * 3, axis=-1)
 
     end_time = time.time()
 
     if benchmark:
         print("Greyscale conversion took", end_time - start_time, "seconds to run")
 
-    grayscale_uint8 = (grayscale_img * 255).astype(np.uint8)
+    grey_image_rgb_uint8 = (grey_image_rgb * 255).astype(np.uint8)
 
-    return grayscale_uint8
+    return grey_image_rgb_uint8  # Returns a 3D RGB grey image
