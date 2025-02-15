@@ -6,6 +6,7 @@ import time
 
 benchmark = False
 
+# Posterizes the jpg and returns the posterized image
 def color_quantize(filePath):
     original = io.imread(filePath)
     n_colors = 10
