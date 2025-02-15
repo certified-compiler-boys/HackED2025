@@ -1,7 +1,9 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from skimage import io
+from skimage.filters import gaussian
 from sklearn.cluster import KMeans
+from skimage import color
 import time
 
 benchmark = False
@@ -25,3 +27,29 @@ def color_quantize(original):
 
     return less_colors # PROCESSED STUFF IMAGE
 
+
+def gaussian_blur(original, blurStrength = 1):
+    start_time = time.time()
+
+    blurred = gaussian(original, sigma=blurStrength)
+
+    end_time = time.time()
+
+    if benchmark:
+        print("Gaussian blur took", end_time - start_time, "seconds to run")
+
+    return (blurred * 255).astype('uint8')
+
+def greyscale(original):
+    start_time = time.time()
+
+    grayscale_img = color.rgb2gray(original)  
+
+    end_time = time.time()
+
+    if benchmark:
+        print("Greyscale conversion took", end_time - start_time, "seconds to run")
+
+    grayscale_uint8 = (grayscale_img * 255).astype(np.uint8)
+
+    return grayscale_uint8
