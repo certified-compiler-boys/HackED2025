@@ -1,1 +1,0 @@
-v2.imshow("Thresholded Difference", thresh)
