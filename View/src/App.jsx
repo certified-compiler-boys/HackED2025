@@ -10,20 +10,26 @@ const App = () => {
     const [recording, setRecording] = useState(false);
     const chunksRef = useRef([]);
     const [selectedPoints, setSelectedPoints] = useState([]);
-    const [capturedFrame, setCapturedFrame] = useState(null); // Store frame
-    const intervalRef = useRef(null); // Ref to track auto-send interval
+    const [capturedFrame, setCapturedFrame] = useState(null);
+    const intervalRef = useRef(null);
+
+    // Check for supported MIME types
+    const getSupportedMimeType = () => {
+        const mimeTypes = [
+            'video/mp4; codecs=avc1',
+            'video/webm; codecs=vp9',
+            'video/webm; codecs=vp8',
+            'video/webm'
+        ];
+        return mimeTypes.find(mimeType => MediaRecorder.isTypeSupported(mimeType));
+    };
 
     useEffect(() => {
         navigator.mediaDevices.enumerateDevices().then((deviceList) => {
             const videoDevices = deviceList.filter(device => device.kind === "videoinput");
             setDevices(videoDevices);
-
             const defaultCamera = videoDevices.find(device => device.label.toLowerCase().includes("face time") || device.label.toLowerCase().includes("built-in"));
-            if (defaultCamera) {
-                setSelectedDevice(defaultCamera.deviceId);
-            } else if (videoDevices.length > 0) {
-                setSelectedDevice(videoDevices[0].deviceId);
-            }
+            setSelectedDevice(defaultCamera?.deviceId || videoDevices[0]?.deviceId || "");
         });
     }, []);
 
@@ -57,19 +63,20 @@ const App = () => {
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext("2d");
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const frameDataUrl = canvas.toDataURL("image/png");
-        setCapturedFrame(frameDataUrl);
+        ctx.drawImage(video, 0, 0);
+        setCapturedFrame(canvas.toDataURL("image/png"));
     };
 
     const startRecording = (stream) => {
         chunksRef.current = [];
-        const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
+        const mimeType = getSupportedMimeType();
+        if (!mimeType) {
+            console.error("No supported MIME type found");
+            return;
+        }
 
-        recorder.ondataavailable = (event) => {
-            if (event.data.size > 0) chunksRef.current.push(event.data);
-        };
-
+        const recorder = new MediaRecorder(stream, { mimeType });
+        recorder.ondataavailable = (event) => event.data.size > 0 && chunksRef.current.push(event.data);
         recorder.onstop = () => saveVideo();
         mediaRecorderRef.current = recorder;
         recorder.start();
@@ -78,84 +85,55 @@ const App = () => {
         setTimeout(() => {
             recorder.stop();
             setRecording(false);
-        }, 1500000); // Record for 1500 seconds
+        }, 15000); // Record for 15 seconds
 
-        // Start auto-send every 15s
-        if (!intervalRef.current) {
-            intervalRef.current = setInterval(sendDataToFlask, 15000);
-        }
     };
 
     const saveVideo = () => {
-        if (chunksRef.current.length === 0) return;
-        const blob = new Blob(chunksRef.current, { type: "video/webm" });
+        if (!chunksRef.current.length || !mediaRecorderRef.current) return;
+        
+        const blob = new Blob(chunksRef.current, { type: mediaRecorderRef.current.mimeType });
         const url = URL.createObjectURL(blob);
+        const ext = mediaRecorderRef.current.mimeType.split('/')[1].split(';')[0];
 
         const a = document.createElement("a");
         a.href = url;
-        a.download = `video_${Date.now()}.webm`;
+        a.download = `video_${Date.now()}.${ext}`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
 
         if (videoRef.current?.srcObject) startRecording(videoRef.current.srcObject);
     };
+    
+return (
+    <div className="grid-container">
+        <div className="video-container">
+            <h2>Webcam Feed (Auto Recording 15s Clips)</h2>
+            <select onChange={(e) => setSelectedDevice(e.target.value)} value={selectedDevice}>
+                {devices.map((device) => (
+                    <option key={device.deviceId} value={device.deviceId}>
+                        {device.label || `Camera ${device.deviceId}`}
+                    </option>
+                ))}
+            </select>
+            <video ref={videoRef} autoPlay playsInline />
+            <p className="recording-status">{recording ? "Recording..." : "Waiting to record"}</p>
+        </div>
 
-    // ----------------- FLASK CONNECTION (Auto Send Every 15s) -----------------
+        <div className="plot-container">
+            <h2>Plot Points on Image</h2>
+            <PlotPoints onPointsSelected={setSelectedPoints} presetImage={capturedFrame} />
+            <p className="selected-points">Selected Points: {JSON.stringify(selectedPoints)}</p>
+        </div>
+    </div>
+);
+};
 
-    const sendDataToFlask = async () => {
-        if (!capturedFrame || selectedPoints.length === 0) {
-            console.warn("No frame or points to send!");
-            return;
-        }
-
-        const dataToSend = {
-            frame: capturedFrame,
-            points: selectedPoints
-        };
-
-        try {
-            const response = await fetch("http://127.0.0.1:5000/process", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify(dataToSend),
-            });
-
-            const result = await response.json();
-            console.log("Response from Flask:", result);
-        } catch (error) {
-            console.error("Error sending data to Flask:", error);
-        }
-    };
+export default App;
 
     
 
     // ----------------- END FLASK CONNECTION -----------------
 
-    return (
-        <div className="grid-container">
-            <div className="video-container">
-                <h2>Webcam Feed (Auto Recording 15s Clips)</h2>
-                <select onChange={(e) => setSelectedDevice(e.target.value)} value={selectedDevice}>
-                    {devices.map((device) => (
-                        <option key={device.deviceId} value={device.deviceId}>
-                            {device.label || `Camera ${device.deviceId}`}
-                        </option>
-                    ))}
-                </select>
-                <video ref={videoRef} autoPlay playsInline />
-                <p className="recording-status">{recording ? "Recording..." : "Waiting to record"}</p>
-            </div>
 
-            <div className="plot-container">
-                <h2>Plot Points on Image</h2>
-                <PlotPoints onPointsSelected={setSelectedPoints} presetImage={capturedFrame} />
-                <p className="selected-points">Selected Points: {JSON.stringify(selectedPoints)}</p>
-            </div>
-        </div>
-    );
-};
-
-export default App;
