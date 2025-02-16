@@ -1,0 +1,205 @@
+import { useRef, useState, useEffect } from "react";
+
+const PlotPoints = ({ onPointsSelected, presetImage }) => {
+    const canvasRef = useRef(null);
+    const fileInputRef = useRef(null);
+    const [image, setImage] = useState(presetImage || null); // Initialize with preset image
+    const [points, setPoints] = useState([]);
+    const globalCoords = useRef([]);
+
+    useEffect(() => {
+        if (presetImage) {
+            setImage(presetImage); // Update image when presetImage changes
+        }
+    }, [presetImage]);
+
+    useEffect(() => {
+        if (!image) return;
+
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
+        const img = new Image();
+        img.src = image;
+        img.onload = () => {
+            // Get the container size
+            const maxWidth = 640;
+            const maxHeight = 480;
+
+            // Get the original image dimensions
+            let width = img.width;
+            let height = img.height;
+
+            // Calculate the scaling factor to fit the image within the max dimensions
+            const scaleWidth = maxWidth / width;
+            const scaleHeight = maxHeight / height;
+            const scale = Math.min(scaleWidth, scaleHeight);
+
+            // Apply the scaling factor
+            width = width * scale;
+            height = height * scale;
+
+            // Set canvas size to fit the image
+            canvas.width = width;
+            canvas.height = height;
+
+            // Draw the image scaled down to fit the box
+            ctx.drawImage(img, 0, 0, width, height);
+        };
+    }, [image]);
+
+    const handleFileChange = (event) => {
+        const file = event.target.files[0];
+        if (!file || !file.type.startsWith("image/")) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => setImage(e.target.result);
+        reader.readAsDataURL(file);
+    };
+
+    const savePercentagesToFile = (points) => {
+        if (points.length < 2) return;
+
+        // Create a string with the percentages
+        const content = points
+            .map((point, index) => `${point.x.toFixed(2)}\n${point.y.toFixed(2)}`)
+            .join("\n");
+
+        // Create a Blob with the content
+        const blob = new Blob([content], { type: "text/plain" });
+
+        // Create a download link
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "points_percentages.txt";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        // Clean up the URL object
+        URL.revokeObjectURL(url);
+    };
+
+    const handleClick = (event) => {
+        if (points.length >= 2) return; // Only allow two points
+
+        const canvas = canvasRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left; // Absolute x position
+        const y = event.clientY - rect.top; // Absolute y position
+
+        // Calculate percentages relative to image dimensions
+        const width = canvas.width;
+        const height = canvas.height;
+        const xPercent = (x / width) * 100;
+        const yPercent = (y / height) * 100;
+
+        const newPoints = [...points, { x: xPercent, y: yPercent }];
+        setPoints(newPoints);
+        globalCoords.current = newPoints;
+
+        if (newPoints.length === 2) {
+            onPointsSelected(globalCoords.current); // Send points to parent
+            savePercentagesToFile(newPoints); // Automatically save percentages to file
+        }
+
+        // Redraw image with points
+        const ctx = canvas.getContext("2d");
+        const img = new Image();
+        img.src = image;
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            ctx.fillStyle = "red";
+            ctx.beginPath();
+            newPoints.forEach((p) => {
+                const xPos = (p.x / 100) * width; // Convert percentage back to pixels for drawing
+                const yPos = (p.y / 100) * height; // Convert percentage back to pixels for drawing
+                ctx.arc(xPos, yPos, 10, 0, 2 * Math.PI);
+            });
+            ctx.fill();
+        };
+    };
+
+    const handleReselect = () => {
+        setPoints([]); // Reset points
+        globalCoords.current = []; // Reset global coordinates
+        onPointsSelected([]); // Notify parent that points have been reset
+
+        // Redraw the image without points
+        const canvas = canvasRef.current;
+        const ctx = canvas.getContext("2d");
+        const img = new Image();
+        img.src = image;
+        img.onload = () => {
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        };
+    };
+
+    return (
+        <div
+            style={{
+                width: "90%",
+                height: "400px",
+                border: "2px dashed gray",
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                cursor: "pointer",
+                overflow: "hidden",  // Ensure the image doesn't overflow
+            }}
+        >
+            {!image ? (
+                <>
+                    <p>Select an Image from Your Local Directory</p>
+                    <input
+                        type="file"
+                        ref={fileInputRef}
+                        accept="image/*"
+                        onChange={handleFileChange}
+                        style={{ display: "none" }}
+                    />
+                    <button
+                        onClick={() => fileInputRef.current.click()}
+                        style={{
+                            padding: "5px 5px",
+                            backgroundColor: "#00ffff",
+                            color: "#1a1a1a",
+                            border: "none",
+                            borderRadius: "6px",
+                            cursor: "pointer",
+                            fontSize: "16px",
+                            boxShadow: "0 0 10px rgba(0, 255, 255, 0.5)",
+                        }}
+                    >
+                        Browse
+                    </button>
+                </>
+            ) : (
+                <>
+                    <canvas ref={canvasRef} onClick={handleClick} style={{ cursor: "crosshair" }} />
+                    {points.length === 2 && (
+                        <button
+                            onClick={handleReselect}
+                            style={{
+                                marginTop: "10px",
+                                padding: "5px 10px",
+                                backgroundColor: "#ff0000",
+                                color: "#ffffff",
+                                border: "none",
+                                borderRadius: "6px",
+                                cursor: "pointer",
+                                fontSize: "16px",
+                                boxShadow: "0 0 10px rgba(255, 0, 0, 0.5)",
+                            }}
+                        >
+                            Reselect Points
+                        </button>
+                    )}
+                </>
+            )}
+        </div>
+    );
+};
+
+export default PlotPoints;

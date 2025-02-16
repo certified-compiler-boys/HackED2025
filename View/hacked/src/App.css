@@ -1,0 +1,131 @@
+/* General Minimalist Dark Theme */
+body {
+  font-family: 'Arial', sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #121212; /* Dark background */
+  color: #e0e0e0; /* Light text */
+}
+
+/* Container for the App */
+div {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #1e1e1e; /* Slightly lighter dark container */
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+}
+
+h2 {
+  color: #ffffff; /* White for headings */
+  text-align: center;
+  margin-top: 20px;
+  font-size: 24px;
+  font-weight: 600; /* Semi-bold */
+}
+
+/* Flex Layout for Video and PlotPoints */
+.grid-container {
+  display: flex;
+  gap: 20px; /* Space between video and plot points */
+  margin-top: 20px;
+}
+
+/* Video Feed Styling */
+.video-container {
+  flex: 1; /* Take up equal space */
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  background-color: #2c2c2c; /* Dark gray for video container */
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+}
+
+video {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+  display: block;
+}
+
+/* Dropdown for Camera Selection */
+select {
+  width: 100%;
+  padding: 10px;
+  margin-top: 10px;
+  margin-bottom: 20px;
+  border: 1px solid #444; /* Subtle border */
+  border-radius: 6px;
+  background-color: #2c2c2c; /* Dark gray */
+  color: #e0e0e0; /* Light text */
+  font-size: 16px;
+  outline: none;
+  transition: border-color 0.3s ease;
+}
+
+select:hover {
+  border-color: #666; /* Slightly lighter border on hover */
+}
+
+/* Recording Status */
+.recording-status {
+  text-align: center;
+  font-size: 18px;
+  color: #e0e0e0; /* Light text */
+  margin-bottom: 20px;
+}
+
+/* Plot Points Section */
+.plot-container {
+  flex: 1; /* Take up equal space */
+  background-color: #2c2c2c; /* Dark gray */
+  border-radius: 12px;
+  padding: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); /* Subtle shadow */
+}
+
+.PlotPoints img {
+  width: 100%;
+  height: auto;
+  border-radius: 12px;
+}
+
+/* Selected Points Display */
+.selected-points {
+  background-color: #333; /* Slightly lighter gray */
+  padding: 15px;
+  border-radius: 8px;
+  color: #e0e0e0; /* Light text */
+  font-size: 16px;
+  text-align: center;
+  margin-top: 20px;
+}
+
+/* Glowing Effect for Interactive Elements */
+select, .video-container, .plot-container, .selected-points {
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+}
+
+select:focus, .video-container:hover, .plot-container:hover, .selected-points:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Slightly stronger shadow on hover */
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .grid-container {
+    flex-direction: column; /* Stack vertically on smaller screens */
+  }
+
+  h2 {
+    font-size: 20px;
+  }
+
+  select {
+    font-size: 14px;
+  }
+
+  .recording-status {
+    font-size: 16px;
+  }
+}
