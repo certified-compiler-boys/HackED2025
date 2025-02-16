@@ -28,31 +28,10 @@ def getFrames(filepath):
         print(f"Extracted {frameCounter} frames successfully.")
 
 
-getFrames("0001-0050.mp4")
+DOESNT_MOVE = (255, 0, 0)  # RED
+DOES_MOVE = (255, 255, 255)
 
-def getDifferenceBetween2(framePath1, framePath2):
-    frame1 = cv2.imread(framePath1)
-    frame2 = cv2.imread(framePath2)
-
-    if frame1 is None or frame2 is None:
-        print(f"Error: Could not read frames {framePath1} or {framePath2}")
-        return None
-
-    # Convert to grayscale
-    gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
-    gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
-
-    # Compute absolute difference
-    diff = cv2.absdiff(gray1, gray2)
-
-    # Threshold the difference
-    _, thresh = cv2.threshold(diff, 30, 255, cv2.THRESH_BINARY)
-
-    return thresh  # Returning binary difference image
-import cv2
-import numpy as np
-
-def compute_reachability_map(video_path, subtract_value=50, motion_threshold=30, decay_rate=0):
+def compute_reachability_map(video_path, subtract_value=10, motion_threshold=30, decay_rate=0):
     """
     Computes a reachability map from a video stream.
     
@@ -122,7 +101,7 @@ def compute_reachability_map(video_path, subtract_value=50, motion_threshold=30,
     return reach_map
 
 if __name__ == "__main__":
-    video_path = "/Users/saumya/Desktop/model/IMG_8835.mp4"
+    video_path = "train.mp4"
     final_map = compute_reachability_map(video_path,
                                           subtract_value=50,
                                           motion_threshold=30,
@@ -132,3 +111,6 @@ if __name__ == "__main__":
         cv2.imshow("Final Reachability Map", final_map)
         cv2.waitKey(0)
         cv2.destroyAllWindows()
+
+
+
