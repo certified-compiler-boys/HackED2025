@@ -5,46 +5,6 @@ import numpy as np
 DOESNT_MOVE = (255, 255, 255)  # WHITE
 DOES_MOVE = (0, 0, 0)  # BLACK
 
-def getFrames(filepath):
-    videoSrc = cv2.VideoCapture(filepath)
-
-    if not videoSrc.isOpened():
-        print("Error: Could not open video file.")
-    else:
-        output_folder = "frames"
-        os.makedirs(output_folder, exist_ok=True)  # Create folder if it doesn't exist
-
-        frameCounter = 0
-        success, image = videoSrc.read()
-
-        while success:
-            filename = os.path.join(output_folder, f"imageFrame{frameCounter}.jpg")
-            cv2.imwrite(filename, image)
-
-            frameCounter += 1
-            success, image = videoSrc.read()
-
-        videoSrc.release()  # Release the video capture
-        print(f"Extracted {frameCounter} frames successfully.")
-def speed_up_video(input_video_path, output_video_path, speed_factor=2):
-    cap = cv2.VideoCapture(input_video_path)
-    fps = int(cap.get(cv2.CAP_PROP_FPS))
-    width, height = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
-    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
-    out = cv2.VideoWriter(output_video_path, fourcc, fps * speed_factor, (width, height))
-
-    frame_index = 0
-    while cap.isOpened():
-        ret, frame = cap.read()
-        if not ret:
-            break
-        if frame_index % speed_factor == 0:
-            out.write(frame)
-        frame_index += 1
-
-    cap.release()
-    out.release()
-    cv2.destroyAllWindows()
 def compute_reachability_map(video_path, subtract_value=5, motion_threshold=30):
     cap = cv2.VideoCapture(video_path)
     ret, frame = cap.read()
@@ -59,7 +19,6 @@ def compute_reachability_map(video_path, subtract_value=5, motion_threshold=30):
     # Initialize reachability map as White (255,255,255 in BGR)
     height, width = gray_prev.shape
     reach_map = np.full((height, width, 3), 255, dtype=np.uint8)  # White background
-    speed_up_video(video_path,"output.mp4",4)
     cap = cv2.VideoCapture("output.mp4")
     while cap.isOpened():
         ret, frame = cap.read()
