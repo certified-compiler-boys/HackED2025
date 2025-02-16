@@ -33,6 +33,9 @@ def dijkstra(start, end, nodes, gridsize):
     distances[start] = 0
     previous = {coord: None for coord in nodes}
 
+    if nodes[start] == "inf" or nodes[end] == "inf":
+        return []
+
     while pq:
 
         current_cost, current = heapq.heappop(pq)
@@ -72,18 +75,24 @@ def parsePoint(x,y,size = 10):
 def returnPath(image,start,goal):
     height, width, block_size, average_weights = imageread(image)
 
+    start = (start[0]/100 *width, start[1]/100*height)
+    goal = (goal[0]/100 *width, goal[1]/100*height)
+
     start = ( clamp(start[0],0,width) , clamp(start[1],0,height) )
     goal = ( clamp(goal[0],0,width) , clamp(goal[1],0,height) )
 
     start = parsePoint(start[0], start[1], block_size)
     start = (start[0]+block_size//2,start[1]+block_size//2)
-
     goal = parsePoint(goal[0], goal[1], block_size)
     goal = (goal[0]+block_size//2,goal[1]+block_size//2)
 
     path = dijkstra(start, goal, average_weights, block_size)
-
-    return path
+    new_path = []
+    for point in (path):
+        xc = point[0]*100
+        yc = point[1]*100
+        new_path.append((xc/width, yc/height))
+    return new_path
 
 def clamp(x,min,max):
     if x < min:
@@ -94,19 +103,20 @@ def clamp(x,min,max):
 
 def main():
     image = cv2.imread('test_dice.png')
-    start = (0,450)
-    goal = (950,450)
-    path = returnPath(image, start, goal)
+    start = (3,60)
+    goal = (95,95)
 
-    for i in range(len(path) - 1):
-        cv2.line(image, path[i], path[i + 1], (0, 255, 0), 10)  # Green color, thickness = 2
+    path = returnPath(image, start, goal)
+    print(path)
+    # for i in range(len(path) - 1):
+    #     path[i] = (int(path[i][0]),int(path[i][1]))
+    #     path[i+1] = (int(path[i+1][0]),int(path[i+1][1]))
+
+    #     cv2.line(image, path[i], path[i + 1], (0, 255, 0), 10)  # Green color, thickness = 2
 
     # Show the image (optional)
-    cv2.imshow('Image with Path', image)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
-
-    # Save the image (optional)
-    # cv2.imwrite('output.png', image)
+    # cv2.imshow('Image with Path', image)
+    # cv2.waitKey(0)
+    # cv2.destroyAllWindows()
 
 main()
