@@ -130,5 +130,3 @@ def main():
     cv2.imshow('Image with Path', image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-
-main()
