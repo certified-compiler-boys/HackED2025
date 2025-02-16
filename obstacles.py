@@ -1,6 +1,24 @@
 import cv2
 import numpy as np
+def speed_up_video(input_video_path, output_video_path, speed_factor=2):
+    cap = cv2.VideoCapture(input_video_path)
+    fps = int(cap.get(cv2.CAP_PROP_FPS))
+    width, height = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter(output_video_path, fourcc, fps * speed_factor, (width, height))
 
+    frame_index = 0
+    while cap.isOpened():
+        ret, frame = cap.read()
+        if not ret:
+            break
+        if frame_index % speed_factor == 0:
+            out.write(frame)
+        frame_index += 1
+
+    cap.release()
+    out.release()
+    cv2.destroyAllWindows()
 def compute_reachability_map(video_path, subtract_value=50, motion_threshold=30, decay_rate=0):
     """
     Computes a reachability map from a video stream.
@@ -72,7 +90,7 @@ def compute_reachability_map(video_path, subtract_value=50, motion_threshold=30,
     return reach_map
 
 if __name__ == "__main__":
-    video_path = "dice_original.mp4"
+    video_path = "output.mp4"
     final_map = compute_reachability_map(video_path,
                                           subtract_value=50,
                                           motion_threshold=30,

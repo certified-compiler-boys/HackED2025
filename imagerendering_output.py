@@ -24,7 +24,7 @@ def main():
     if overlayed_image is not None:
         plt.imshow(cv2.cvtColor(overlayed_image, cv2.COLOR_BGR2RGB))  # Convert BGR to RGB for display
         plt.axis("off")
-        plt.show()
+        # plt.show()
 
 if __name__ == "__main__":
     main()
