@@ -2,16 +2,10 @@ import cv2
 import numpy as np
 import heapq
 
-def imageread():
-
-    # Load the image
-    image = cv2.imread('img/frame1.png')
-
-    if image is None:
-        raise FileNotFoundError("The image 'fram1.png could not be found")
+def imageread(image, block_size = 10):
 
     height, width, _ = image.shape
-    block_size = 10
+    # block_size = 10
     height, width = parsePoint(height, width, block_size)
     
 
@@ -72,15 +66,9 @@ def dijkstra(start, end, nodes, gridsize):
 def main():
     start = (1,5)
     goal = (1900,1070)
-
-    
-    
     height, width, block_size, average_weights = imageread()
-
     start = (max(0,start[0]),min(width,start[1]))
     goal = (max(0,goal[0]),min(width,goal[1]))
-
-    # path = algorithm2.a_star(start, goal, width, height, average_weights, block_size, 5)
     start = parsePoint(start[0], start[1], block_size)
     start = (start[0]+block_size//2,start[1]+block_size//2)
     goal = parsePoint(goal[0], goal[1], block_size)
@@ -88,15 +76,37 @@ def main():
 
     path = dijkstra(start, goal, average_weights, block_size)
     
-    if path != None:
-        for k in range (len(path)):
-            print(path[k])
-    else:
-        print(path)
+    # if path != None:
+    #     for k in range (len(path)):
+    #         print(path[k])
+    # else:
+    #     print(path)
 
 
 def parsePoint(x,y,size = 10):
     return ( x - (x % size), y - (y % size) )
 
+def returnPath(image,start,end):
+    height, width, block_size, average_weights = imageread(image)
+
+    start = ( clamp(start[0],0,width) , clamp(start[1],0,height) )
+    goal = ( clamp(goal[0],0,width) , clamp(goal[1],0,height) )
+
+    start = parsePoint(start[0], start[1], block_size)
+    start = (start[0]+block_size//2,start[1]+block_size//2)
+
+    goal = parsePoint(goal[0], goal[1], block_size)
+    goal = (goal[0]+block_size//2,goal[1]+block_size//2)
+
+    path = dijkstra(start, goal, average_weights, block_size)
+
+    return path
+
+def clamp(x,min,max):
+    if x < min:
+        return min
+    if x > max:
+        return max
+    return x
 
 main()
