@@ -56,30 +56,6 @@ const PlotPoints = ({ onPointsSelected, presetImage }) => {
         reader.readAsDataURL(file);
     };
 
-    const savePercentagesToFile = (points) => {
-        if (points.length < 2) return;
-
-        // Create a string with the percentages
-        const content = points
-            .map((point, index) => `${point.x.toFixed(2)}\n${point.y.toFixed(2)}`)
-            .join("\n");
-
-        // Create a Blob with the content
-        const blob = new Blob([content], { type: "text/plain" });
-
-        // Create a download link
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = "points_percentages.txt";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-
-        // Clean up the URL object
-        URL.revokeObjectURL(url);
-    };
-
     const handleClick = (event) => {
         if (points.length >= 2) return; // Only allow two points
 
@@ -100,7 +76,9 @@ const PlotPoints = ({ onPointsSelected, presetImage }) => {
 
         if (newPoints.length === 2) {
             onPointsSelected(globalCoords.current); // Send points to parent
-            savePercentagesToFile(newPoints); // Automatically save percentages to file
+
+            // Send points to Flask (Model folder)
+            sendPointsToFlask(globalCoords.current);
         }
 
         // Redraw image with points
@@ -120,19 +98,25 @@ const PlotPoints = ({ onPointsSelected, presetImage }) => {
         };
     };
 
-    const handleReselect = () => {
-        setPoints([]); // Reset points
-        globalCoords.current = []; // Reset global coordinates
-        onPointsSelected([]); // Notify parent that points have been reset
-
-        // Redraw the image without points
-        const canvas = canvasRef.current;
-        const ctx = canvas.getContext("2d");
-        const img = new Image();
-        img.src = image;
-        img.onload = () => {
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+    const sendPointsToFlask = async (points) => {
+        const dataToSend = {
+            points: points
         };
+
+        try {
+            const response = await fetch("http://127.0.0.1:5000/save-points", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(dataToSend),
+            });
+
+            const result = await response.json();
+            console.log("Response from Flask:", result);
+        } catch (error) {
+            console.error("Error sending points to Flask:", error);
+        }
     };
 
     return (
@@ -180,7 +164,7 @@ const PlotPoints = ({ onPointsSelected, presetImage }) => {
                     <canvas ref={canvasRef} onClick={handleClick} style={{ cursor: "crosshair" }} />
                     {points.length === 2 && (
                         <button
-                            onClick={handleReselect}
+                            onClick={() => setPoints([])}
                             style={{
                                 marginTop: "10px",
                                 padding: "5px 10px",
@@ -193,7 +177,7 @@ const PlotPoints = ({ onPointsSelected, presetImage }) => {
                                 boxShadow: "0 0 10px rgba(255, 0, 0, 0.5)",
                             }}
                         >
-                            Reselect Points
+                            Reset Points
                         </button>
                     )}
                 </>

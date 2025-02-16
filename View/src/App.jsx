@@ -10,22 +10,19 @@ const App = () => {
     const [recording, setRecording] = useState(false);
     const chunksRef = useRef([]);
     const [selectedPoints, setSelectedPoints] = useState([]);
-    const [capturedFrame, setCapturedFrame] = useState(null); // State to store the third frame
+    const [capturedFrame, setCapturedFrame] = useState(null); // Store frame
+    const intervalRef = useRef(null); // Ref to track auto-send interval
+    const pingCounterRef = useRef(1); // Track hello count
 
     useEffect(() => {
         navigator.mediaDevices.enumerateDevices().then((deviceList) => {
-            // Filter only video input devices
             const videoDevices = deviceList.filter(device => device.kind === "videoinput");
             setDevices(videoDevices);
 
-            // Default to Mac's built-in camera if available
             const defaultCamera = videoDevices.find(device => device.label.toLowerCase().includes("face time") || device.label.toLowerCase().includes("built-in"));
-            
-            // If found, set the Mac camera as the selected device
             if (defaultCamera) {
                 setSelectedDevice(defaultCamera.deviceId);
             } else if (videoDevices.length > 0) {
-                // Fallback to the first available camera
                 setSelectedDevice(videoDevices[0].deviceId);
             }
         });
@@ -38,8 +35,6 @@ const App = () => {
             .then((stream) => {
                 if (videoRef.current) {
                     videoRef.current.srcObject = stream;
-
-                    // Capture the third frame after the video starts playing
                     const video = videoRef.current;
                     let frameCount = 0;
 
@@ -65,7 +60,7 @@ const App = () => {
         const ctx = canvas.getContext("2d");
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const frameDataUrl = canvas.toDataURL("image/png");
-        setCapturedFrame(frameDataUrl); // Set the captured frame
+        setCapturedFrame(frameDataUrl);
     };
 
     const startRecording = (stream) => {
@@ -84,7 +79,12 @@ const App = () => {
         setTimeout(() => {
             recorder.stop();
             setRecording(false);
-        }, 1500000);
+        }, 1500000); // Record for 1500 seconds
+
+        // Start auto-send every 15s
+        if (!intervalRef.current) {
+            intervalRef.current = setInterval(sendDataToFlask, 15000);
+        }
     };
 
     const saveVideo = () => {
@@ -101,6 +101,66 @@ const App = () => {
 
         if (videoRef.current?.srcObject) startRecording(videoRef.current.srcObject);
     };
+
+    // ----------------- FLASK CONNECTION (Auto Send Every 15s) -----------------
+
+    const sendDataToFlask = async () => {
+        if (!capturedFrame || selectedPoints.length === 0) {
+            console.warn("No frame or points to send!");
+            return;
+        }
+
+        const dataToSend = {
+            frame: capturedFrame,
+            points: selectedPoints
+        };
+
+        try {
+            const response = await fetch("http://127.0.0.1:5000/process", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(dataToSend),
+            });
+
+            const result = await response.json();
+            console.log("Response from Flask:", result);
+        } catch (error) {
+            console.error("Error sending data to Flask:", error);
+        }
+    };
+
+    // ----------------- PING FLASK EVERY 5 SECONDS -----------------
+    useEffect(() => {
+        const pingInterval = setInterval(() => {
+            pingFlask();
+        },1000); // Send every 5 seconds
+
+        return () => clearInterval(pingInterval); // Cleanup on unmount
+    }, []);
+
+    const pingFlask = async () => {
+        const helloMessage = `hello ${pingCounterRef.current}`;
+        pingCounterRef.current += 1; // Increment hello count
+
+        try {
+            const response = await fetch("http://127.0.0.1:5000/ping", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ message: helloMessage }),
+            });
+
+            const result = await response.json();
+            console.log("Ping response from Flask:", result);
+        } catch (error) {
+            console.error("Error pinging Flask:", error);
+        }
+    };
+
+    // ----------------- END FLASK CONNECTION -----------------
 
     return (
         <div className="grid-container">
@@ -119,7 +179,6 @@ const App = () => {
 
             <div className="plot-container">
                 <h2>Plot Points on Image</h2>
-                {/* Pass the captured frame to PlotPoints */}
                 <PlotPoints onPointsSelected={setSelectedPoints} presetImage={capturedFrame} />
                 <p className="selected-points">Selected Points: {JSON.stringify(selectedPoints)}</p>
             </div>
