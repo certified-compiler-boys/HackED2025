@@ -1,11 +1,11 @@
 import cv2
 import numpy as np
 import heapq
-
+threshold = 10
 def imageread(image, block_size = 10):
 
     height, width, _ = image.shape
-    # block_size = 10
+    # block_size = 10 
     height, width = parsePoint(height, width, block_size)
     
 
@@ -17,9 +17,9 @@ def imageread(image, block_size = 10):
             green_channel = block[:,:,1]
             red_channel = block[:,:,2]
             avg_weight = np.mean(green_channel)
-            normalized_weight = 1 - round(avg_weight / 255.0, 2)
+            normalized_weight = round(avg_weight / 255.0, 2)
 
-            if np.mean(red_channel) > np.mean(green_channel):
+            if np.mean(red_channel) - np.mean(green_channel) > threshold:
                 normalized_weight = "inf"
 
             average_weights[(x,y)] = normalized_weight
@@ -43,7 +43,9 @@ def dijkstra(start, end, nodes, gridsize):
         x, y = current
         neighbors = [
             (x + gridsize, y), (x - gridsize, y),
-            (x, y + gridsize), (x, y - gridsize)
+            (x, y + gridsize), (x, y - gridsize),
+            (x + gridsize, y + gridsize), (x + gridsize, y - gridsize),
+            (x - gridsize, y - gridsize), (x - gridsize, y + gridsize)
         ]
 
         for neighbor in neighbors:
@@ -62,12 +64,7 @@ def dijkstra(start, end, nodes, gridsize):
     return path[::-1] if path[-1] == start else []  # Return reversed path or empty if no path
 
 
-def main():
-    image = cv2.imread('img/frame1.png')
-    start = (0,0)
-    goal = (100,100)
-    path = returnPath(image, start, goal)
-    print(len(path))
+
 
 def parsePoint(x,y,size = 10):
     return ( x - (x % size), y - (y % size) )
@@ -94,5 +91,22 @@ def clamp(x,min,max):
     if x > max:
         return max
     return x
+
+def main():
+    image = cv2.imread('test_dice.png')
+    start = (0,450)
+    goal = (950,450)
+    path = returnPath(image, start, goal)
+
+    for i in range(len(path) - 1):
+        cv2.line(image, path[i], path[i + 1], (0, 255, 0), 10)  # Green color, thickness = 2
+
+    # Show the image (optional)
+    cv2.imshow('Image with Path', image)
+    cv2.waitKey(0)
+    cv2.destroyAllWindows()
+
+    # Save the image (optional)
+    # cv2.imwrite('output.png', image)
 
 main()
