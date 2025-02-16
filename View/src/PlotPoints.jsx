@@ -99,10 +99,10 @@ const PlotPoints = ({ onPointsSelected, presetImage }) => {
     };
 
     const sendPointsToFlask = async (points) => {
-        const dataToSend = {
-            points: points
-        };
-
+        const dataToSend = { points: points };
+    
+        console.log("🚀 Sending data to Flask:", dataToSend);  // Debugging log
+    
         try {
             const response = await fetch("http://127.0.0.1:5000/save-points", {
                 method: "POST",
@@ -111,11 +111,17 @@ const PlotPoints = ({ onPointsSelected, presetImage }) => {
                 },
                 body: JSON.stringify(dataToSend),
             });
-
+    
+            console.log("📡 Fetch Response Status:", response.status); // Log HTTP status code
+    
+            if (!response.ok) {
+                throw new Error(`❌ HTTP error! Status: ${response.status}`);
+            }
+    
             const result = await response.json();
-            console.log("Response from Flask:", result);
+            console.log("✅ Response from Flask:", result);
         } catch (error) {
-            console.error("Error sending points to Flask:", error);
+            console.error("❌ Error sending points to Flask:", error);
         }
     };
 
@@ -123,14 +129,15 @@ const PlotPoints = ({ onPointsSelected, presetImage }) => {
         <div
             style={{
                 width: "90%",
-                height: "400px",
+                height: "500px",  // Increase height to make space for the button
                 border: "2px dashed gray",
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                justifyContent: "center",
+                justifyContent: "flex-start",  // Align items at the top
                 cursor: "pointer",
-                overflow: "hidden",  // Ensure the image doesn't overflow
+                overflow: "hidden",  
+                paddingBottom: "20px",  // Add padding at the bottom
             }}
         >
             {!image ? (
@@ -146,7 +153,7 @@ const PlotPoints = ({ onPointsSelected, presetImage }) => {
                     <button
                         onClick={() => fileInputRef.current.click()}
                         style={{
-                            padding: "5px 5px",
+                            padding: "10px 20px",
                             backgroundColor: "#00ffff",
                             color: "#1a1a1a",
                             border: "none",
@@ -161,13 +168,17 @@ const PlotPoints = ({ onPointsSelected, presetImage }) => {
                 </>
             ) : (
                 <>
-                    <canvas ref={canvasRef} onClick={handleClick} style={{ cursor: "crosshair" }} />
+                    <canvas
+                        ref={canvasRef}
+                        onClick={handleClick}
+                        style={{ cursor: "crosshair", marginBottom: "20px" }}  // Add margin below canvas
+                    />
                     {points.length === 2 && (
                         <button
                             onClick={() => setPoints([])}
                             style={{
-                                marginTop: "10px",
-                                padding: "5px 10px",
+                                marginBottom: "50px",
+                                padding: "5px 10px ",
                                 backgroundColor: "#ff0000",
                                 color: "#ffffff",
                                 border: "none",
@@ -175,6 +186,9 @@ const PlotPoints = ({ onPointsSelected, presetImage }) => {
                                 cursor: "pointer",
                                 fontSize: "16px",
                                 boxShadow: "0 0 10px rgba(255, 0, 0, 0.5)",
+                                zIndex: 999,
+                                position: "relative",
+                                top: "-3%"
                             }}
                         >
                             Reset Points

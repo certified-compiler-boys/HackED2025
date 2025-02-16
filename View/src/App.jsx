@@ -12,7 +12,6 @@ const App = () => {
     const [selectedPoints, setSelectedPoints] = useState([]);
     const [capturedFrame, setCapturedFrame] = useState(null); // Store frame
     const intervalRef = useRef(null); // Ref to track auto-send interval
-    const pingCounterRef = useRef(1); // Track hello count
 
     useEffect(() => {
         navigator.mediaDevices.enumerateDevices().then((deviceList) => {
@@ -131,34 +130,7 @@ const App = () => {
         }
     };
 
-    // ----------------- PING FLASK EVERY 5 SECONDS -----------------
-    useEffect(() => {
-        const pingInterval = setInterval(() => {
-            pingFlask();
-        },1000); // Send every 5 seconds
-
-        return () => clearInterval(pingInterval); // Cleanup on unmount
-    }, []);
-
-    const pingFlask = async () => {
-        const helloMessage = `hello ${pingCounterRef.current}`;
-        pingCounterRef.current += 1; // Increment hello count
-
-        try {
-            const response = await fetch("http://127.0.0.1:5000/ping", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({ message: helloMessage }),
-            });
-
-            const result = await response.json();
-            console.log("Ping response from Flask:", result);
-        } catch (error) {
-            console.error("Error pinging Flask:", error);
-        }
-    };
+    
 
     // ----------------- END FLASK CONNECTION -----------------
 
