@@ -97,7 +97,7 @@ def save_points():
         points_filename = os.path.join(MODEL_DIR, 'reference_points.txt')
         with open(points_filename, 'w') as f:
             for point in points:
-                # writing points like a boss, no bullshit
+                # writing points
                 f.write(f"{point['x']},{point['y']}\n")
 
         # now, trigger main.py like it's the final round of the precinct raid
