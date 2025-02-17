@@ -93,11 +93,60 @@ select:hover {
 .path-animation-canvas {
     width: 640px;
     height: 360px;
-    top: -40%;
+    top: -47%;
     left: 3%;
     position: relative;
     pointer-events: none;
     transform: scale(1.0);
+}
+.recording-controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.record-button, .stop-button {
+  flex: 1;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+  transition: all 0.3s ease;
+}
+
+.record-button {
+  background: #646cff;
+  color: white;
+}
+
+.record-button:disabled {
+  background: #3a3a3a;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.record-button:not(:disabled):hover {
+  background: #535bf2;
+  transform: translateY(-1px);
+}
+
+.stop-button {
+  background: #ff4757;
+  color: white;
+}
+
+.stop-button:disabled {
+  background: #3a3a3a;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+
+.stop-button:not(:disabled):hover {
+  background: #ff6b81;
+  transform: translateY(-1px);
 }
 /* Selected Points Display */
 .selected-points {
@@ -135,5 +184,56 @@ select:focus, .video-container:hover, .plot-container:hover, .selected-points:ho
 
   .recording-status {
     font-size: 16px;
+  }
+}
+/* init: styling for the start page, motherfucker, let's make it look dope */
+
+/* init: style the header, fuck yeah, make it bold */
+.start-page h1 {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+}
+
+/* init: chill styling for the paragraph, keep it lit */
+.start-page p {
+  font-size: 1.5rem;
+  margin-bottom: 30px;
+}
+
+/* init: styling the button to be interactive and badass */
+.start-page button {
+  padding: 15px 30px;
+  font-size: 1.2rem;
+  border: none;
+  border-radius: 8px;
+  background-color: rgba(255, 255, 255, 0.3); /* init: semi-transparent for that cool effect */
+  color: #fff;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+/* init: hover effect for the button, you fucking legend */
+.start-page button:hover {
+  background-color: rgba(255, 255, 255, 0.5);
+  transform: scale(1.05);
+}
+
+/* init: active state, so when you click it, it gives a badass shrink effect */
+.start-page button:active {
+  transform: scale(0.95);
+}
+
+/* init: responsive tweaks, no bullshit on small screens */
+@media (max-width: 768px) {
+  .start-page h1 {
+    font-size: 2.5rem;
+  }
+  .start-page p {
+    font-size: 1.2rem;
+  }
+  .start-page button {
+    padding: 12px 25px;
+    font-size: 1rem;
   }
 }
