@@ -20,7 +20,7 @@ def imageread(image, block_size = 10):
             normalized_weight = round(avg_weight / 255.0, 2)
 
             if np.mean(red_channel) - np.mean(green_channel) > threshold:
-                normalized_weight = "inf"
+                normalized_weight = 100
             else:
                 normalized_weight = (normalized_weight*10)**1.5
 
@@ -93,6 +93,40 @@ def returnPath(image,pointArray,ordered = True):
             yc = point[1]*100
             new_path.append((xc/width, yc/height))
         return new_path
+    else:
+        start = convertToPixelPoint(pointArray[0], width, height, block_size)
+        points = [convertToPixelPoint(p, width, height, block_size) for p in pointArray[1:]]
+        
+        best_path = None
+        best_cost = float('inf')
+        
+        for perm in generate_permutations(points):
+            current_path = [start]
+            current_cost = 0
+            current_point = start
+            
+            for next_point in perm:
+                path, cost = dijkstra(current_point, next_point, average_weights, block_size)
+                if not path:
+                    current_cost = float('inf')
+                    break
+                current_path += path[:-1]
+                current_cost += cost
+                current_point = next_point
+            
+            if current_cost < best_cost:
+                best_cost = current_cost
+                best_path = current_path
+        if best_path:
+            new_path = []
+            for point in (best_path):
+                xc = point[0]*100
+                yc = point[1]*100
+                new_path.append((xc/width, yc/height))
+            return new_path
+        else:
+            return []
+
     
     return []
 
@@ -110,16 +144,26 @@ def convertToPixelPoint(point,width,height,block_size):
     point = (point[0]+block_size//2,point[1]+block_size//2)
     return point
 
+def generate_permutations(lst):
+    if len(lst) == 0:
+        return [[]]
+    result = []
+    for i in range(len(lst)):
+        rest = lst[:i] + lst[i+1:]
+        for perm in generate_permutations(rest):
+            result.append([lst[i]] + perm)
+    return result
+
 def main():
     image = cv2.imread('frame1.png')
-    start = (20,45)
-    inter = (10,60)
-    goal = (95,90)
+    goal = (20,25)
+    start = (10,60)
+    inter = (95,90)
 
     height, width, _ = image.shape
     height, width = parsePoint(height, width, 10)
 
-    path = returnPath(image, [start, inter, goal])
+    path = returnPath(image, [start, inter, goal,(80,40)],True)
     if path != []:
         path[0] = (int(path[0][0]/100 * width),int(path[0][1]/100 * height))
 
