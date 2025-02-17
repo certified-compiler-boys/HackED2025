@@ -141,29 +141,6 @@ const PlotPoints = ({ onPointsSelected, presetImage }) => {
         >
             {!image ? (
                 <>
-                    <p>Select an Image from Your Local Directory</p>
-                    <input
-                        type="file"
-                        ref={fileInputRef}
-                        accept="image/*"
-                        onChange={handleFileChange}
-                        style={{ display: "none" }}
-                    />
-                    <button
-                        onClick={() => fileInputRef.current.click()}
-                        style={{
-                            padding: "10px 20px",
-                            backgroundColor: "#00ffff",
-                            color: "#1a1a1a",
-                            border: "none",
-                            borderRadius: "6px",
-                            cursor: "pointer",
-                            fontSize: "16px",
-                            boxShadow: "0 0 10px rgba(0, 255, 255, 0.5)",
-                        }}
-                    >
-                        Browse
-                    </button>
                 </>
             ) : (
                 <>

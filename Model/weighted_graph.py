@@ -20,7 +20,7 @@ def imageread(image, block_size = 10):
             normalized_weight = round(avg_weight / 255.0, 2)
 
             if np.mean(red_channel) - np.mean(green_channel) > threshold:
-                normalized_weight = "inf"
+                normalized_weight = 100
             else:
                 normalized_weight = (normalized_weight*10)**1.5
 
@@ -29,14 +29,13 @@ def imageread(image, block_size = 10):
     return height, width, block_size, average_weights
 
 def dijkstra(start, end, nodes, gridsize):
-    # Priority queue for Dijkstra's algorithm
     pq = [(0, start)]  # (cost, node)
     distances = {coord: float('inf') for coord in nodes}
     distances[start] = 0
     previous = {coord: None for coord in nodes}
-
+    totalCost = 0
     if nodes[start] == "inf" or nodes[end] == "inf":
-        return []
+        return ([],0)
 
     while pq:
 
@@ -54,10 +53,11 @@ def dijkstra(start, end, nodes, gridsize):
         ]
 
         for neighbor in neighbors:
-            if neighbor in nodes and nodes[neighbor] != "inf":  # Check if the node is valid and traversable
+            if neighbor in nodes and nodes[neighbor] != "inf":  # Check if the node is valid / traversable
                 magnitude = ((abs(neighbor[0]-x) + abs(neighbor[1]-y))/gridsize)**0.5
                 new_cost = current_cost + nodes[neighbor]*magnitude
                 if new_cost < distances[neighbor]:
+                    totalCost = new_cost
                     distances[neighbor] = new_cost
                     previous[neighbor] = current
                     heapq.heappush(pq, (new_cost, neighbor))
@@ -67,35 +67,68 @@ def dijkstra(start, end, nodes, gridsize):
         path.append(node)
         node = previous[node]
 
-    return path[::-1] if path[-1] == start else []  # Return reversed path or empty if no path
-
-
-
+    return (path[::-1] if path[-1] == start else [], totalCost)  # Return reversed path or empty if no path
 
 def parsePoint(x,y,size = 10):
     return ( x - (x % size), y - (y % size) )
 
-def returnPath(image,start,goal):
+def returnPath(image,pointArray,ordered = True):
     height, width, block_size, average_weights = imageread(image)
 
-    start = (start[0]/100 *width, start[1]/100*height)
-    goal = (goal[0]/100 *width, goal[1]/100*height)
+    if ordered:
+        returnPath = []
+        for i in range(len(pointArray)-1):
+            start = pointArray[i]
+            goal = pointArray[i+1]
+            
+            start = convertToPixelPoint(start,width,height,block_size)
+            goal = convertToPixelPoint(goal,width,height,block_size)
+            
+            dijkstraVal = dijkstra(start, goal, average_weights, block_size)
+            path, cost= dijkstraVal[0],dijkstraVal[1]
+            returnPath += path[:-1]
+        new_path = []
+        for point in (returnPath):
+            xc = point[0]*100
+            yc = point[1]*100
+            new_path.append((xc/width, yc/height))
+        return new_path
+    else:
+        start = convertToPixelPoint(pointArray[0], width, height, block_size)
+        points = [convertToPixelPoint(p, width, height, block_size) for p in pointArray[1:]]
+        
+        best_path = None
+        best_cost = float('inf')
+        
+        for perm in generate_permutations(points):
+            current_path = [start]
+            current_cost = 0
+            current_point = start
+            
+            for next_point in perm:
+                path, cost = dijkstra(current_point, next_point, average_weights, block_size)
+                if not path:
+                    current_cost = float('inf')
+                    break
+                current_path += path[:-1]
+                current_cost += cost
+                current_point = next_point
+            
+            if current_cost < best_cost:
+                best_cost = current_cost
+                best_path = current_path
+        if best_path:
+            new_path = []
+            for point in (best_path):
+                xc = point[0]*100
+                yc = point[1]*100
+                new_path.append((xc/width, yc/height))
+            return new_path
+        else:
+            return []
 
-    start = ( clamp(start[0],0,width) , clamp(start[1],0,height) )
-    goal = ( clamp(goal[0],0,width) , clamp(goal[1],0,height) )
-
-    start = parsePoint(start[0], start[1], block_size)
-    start = (start[0]+block_size//2,start[1]+block_size//2)
-    goal = parsePoint(goal[0], goal[1], block_size)
-    goal = (goal[0]+block_size//2,goal[1]+block_size//2)
-
-    path = dijkstra(start, goal, average_weights, block_size)
-    new_path = []
-    for point in (path):
-        xc = point[0]*100
-        yc = point[1]*100
-        new_path.append([xc/width, yc/height])
-    return new_path
+    
+    return []
 
 def clamp(x,min,max):
     if x < min:
@@ -104,29 +137,45 @@ def clamp(x,min,max):
         return max
     return x
 
+def convertToPixelPoint(point,width,height,block_size):
+    point = (point[0]/100 *width, point[1]/100*height)
+    point = ( clamp(point[0],0,width) , clamp(point[1],0,height) )
+    point = parsePoint(point[0], point[1], block_size)
+    point = (point[0]+block_size//2,point[1]+block_size//2)
+    return point
+
+def generate_permutations(lst):
+    if len(lst) == 0:
+        return [[]]
+    result = []
+    for i in range(len(lst)):
+        rest = lst[:i] + lst[i+1:]
+        for perm in generate_permutations(rest):
+            result.append([lst[i]] + perm)
+    return result
+
 def main():
     image = cv2.imread('frame1.png')
-    start = (10,55)
-    goal = (95,95)
+    goal = (20,25)
+    start = (10,60)
+    inter = (95,90)
 
     height, width, _ = image.shape
     height, width = parsePoint(height, width, 10)
 
-    path = returnPath(image, start, goal)
+    path = returnPath(image, [start, inter, goal,(80,40)],True)
     if path != []:
         path[0] = (int(path[0][0]/100 * width),int(path[0][1]/100 * height))
 
     for i in range(len(path) - 1):
-##        path[i] = (int(path[i][0]),int(path[i][1]))
-##        path[i+1] = (int(path[i+1][0]),int(path[i+1][1]))
-##        print(path[i])
-        
         path[i+1] = (int(path[i+1][0]/100 * width),int(path[i+1][1]/100 * height))
-        cv2.line(image, path[i], path[i + 1], (0, 255, 0), 10)  # Green color, thickness = 2
+        cv2.line(image, path[i], path[i + 1], (0, 255, 0), 10)  # Green color, thickness = 10
 
-##        Show the image (optional)
+##  Show the image
 
     image = cv2.bitwise_not(image)
     cv2.imshow('Image with Path', image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
+
+# main()
