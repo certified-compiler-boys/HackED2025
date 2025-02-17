@@ -104,7 +104,7 @@ def save_points():
         subprocess.Popen(["python", "/Users/saumya/Desktop/hackedproject/HackED2025/Model/main.py"])
         
         return jsonify({
-            "message": "reference points saved and main.py executed, piece of shit",
+            "message": "reference points saved and main.py executed, test2",
             "file_path": points_filename
         })
 
