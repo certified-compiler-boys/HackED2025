@@ -1,9 +1,10 @@
 from flask import Flask, request, jsonify
-from flask_cors import CORS
+from flask_cors import CORS , cross_origin
 import os
 import base64
+import subprocess
 import uuid
-
+import sys
 app = Flask(__name__)
 
 # Configure CORS
@@ -81,27 +82,34 @@ def process_frame():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/save-points', methods=['POST'])
+@app.route('/save-points', methods=['POST', 'OPTIONS'])
+@cross_origin(origin='http://localhost:5173', methods=['POST', 'OPTIONS'], headers=['Content-Type', 'Authorization'])
 def save_points():
     try:
         data = request.json
         points = data.get("points", [])
         
+        # if less than two points, then screw off, it's not enough info
         if len(points) < 2:
-            return jsonify({"error": "Not enough points received"}), 400
+            return jsonify({"error": "not enough points received, chutiya!"}), 400
 
+        # write the damn points to a file, simple as that
         points_filename = os.path.join(MODEL_DIR, 'reference_points.txt')
         with open(points_filename, 'w') as f:
             for point in points:
+                # writing points like a boss, no bullshit
                 f.write(f"{point['x']},{point['y']}\n")
 
+        # now, trigger main.py like it's the final round of the precinct raid
+        subprocess.Popen(["python", "/Users/saumya/Desktop/hackedproject/HackED2025/Model/main.py"])
+        
         return jsonify({
-            "message": "Reference points saved successfully",
+            "message": "reference points saved and main.py executed, piece of shit",
             "file_path": points_filename
         })
 
     except Exception as e:
+        # something went wrong, so we catch it and throw it back out
         return jsonify({"error": str(e)}), 500
-
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

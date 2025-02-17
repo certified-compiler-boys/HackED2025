@@ -21,6 +21,8 @@ def imageread(image, block_size = 10):
 
             if np.mean(red_channel) - np.mean(green_channel) > threshold:
                 normalized_weight = "inf"
+            else:
+                normalized_weight = (normalized_weight*10)**1.5
 
             average_weights[(x,y)] = normalized_weight
 
@@ -32,6 +34,9 @@ def dijkstra(start, end, nodes, gridsize):
     distances = {coord: float('inf') for coord in nodes}
     distances[start] = 0
     previous = {coord: None for coord in nodes}
+
+    if nodes[start] == "inf" or nodes[end] == "inf":
+        return []
 
     while pq:
 
@@ -50,7 +55,8 @@ def dijkstra(start, end, nodes, gridsize):
 
         for neighbor in neighbors:
             if neighbor in nodes and nodes[neighbor] != "inf":  # Check if the node is valid and traversable
-                new_cost = current_cost + nodes[neighbor]
+                magnitude = ((abs(neighbor[0]-x) + abs(neighbor[1]-y))/gridsize)**0.5
+                new_cost = current_cost + nodes[neighbor]*magnitude
                 if new_cost < distances[neighbor]:
                     distances[neighbor] = new_cost
                     previous[neighbor] = current
@@ -72,18 +78,24 @@ def parsePoint(x,y,size = 10):
 def returnPath(image,start,goal):
     height, width, block_size, average_weights = imageread(image)
 
+    start = (start[0]/100 *width, start[1]/100*height)
+    goal = (goal[0]/100 *width, goal[1]/100*height)
+
     start = ( clamp(start[0],0,width) , clamp(start[1],0,height) )
     goal = ( clamp(goal[0],0,width) , clamp(goal[1],0,height) )
 
     start = parsePoint(start[0], start[1], block_size)
     start = (start[0]+block_size//2,start[1]+block_size//2)
-
     goal = parsePoint(goal[0], goal[1], block_size)
     goal = (goal[0]+block_size//2,goal[1]+block_size//2)
 
     path = dijkstra(start, goal, average_weights, block_size)
-
-    return path
+    new_path = []
+    for point in (path):
+        xc = point[0]*100
+        yc = point[1]*100
+        new_path.append((xc/width, yc/height))
+    return new_path
 
 def clamp(x,min,max):
     if x < min:
@@ -93,20 +105,28 @@ def clamp(x,min,max):
     return x
 
 def main():
-    image = cv2.imread('test_dice.png')
-    start = (0,450)
-    goal = (950,450)
+    image = cv2.imread('frame1.png')
+    start = (10,55)
+    goal = (95,95)
+
+    height, width, _ = image.shape
+    height, width = parsePoint(height, width, 10)
+
     path = returnPath(image, start, goal)
+    if path != []:
+        path[0] = (int(path[0][0]/100 * width),int(path[0][1]/100 * height))
 
     for i in range(len(path) - 1):
+##        path[i] = (int(path[i][0]),int(path[i][1]))
+##        path[i+1] = (int(path[i+1][0]),int(path[i+1][1]))
+##        print(path[i])
+        
+        path[i+1] = (int(path[i+1][0]/100 * width),int(path[i+1][1]/100 * height))
         cv2.line(image, path[i], path[i + 1], (0, 255, 0), 10)  # Green color, thickness = 2
 
-    # Show the image (optional)
+##        Show the image (optional)
+
+    image = cv2.bitwise_not(image)
     cv2.imshow('Image with Path', image)
     cv2.waitKey(0)
     cv2.destroyAllWindows()
-
-    # Save the image (optional)
-    # cv2.imwrite('output.png', image)
-
-main()

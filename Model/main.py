@@ -3,9 +3,14 @@ import time
 import obstacles
 import crowd
 import imagerendering_output
+import weighted_graph as wg
+import cv2
+
+MAX_FILES = 3
+directory = "/Users/saumya/Desktop/hackedproject/HackED2025/Model/videos"
 
 def wait_for_file(filename, timeout=10):
-    """Waits for a file to be created before proceeding."""
+    """Wait for a file to be created before proceeding."""
     start_time = time.time()
     while not os.path.exists(filename):
         if time.time() - start_time > timeout:
@@ -14,42 +19,95 @@ def wait_for_file(filename, timeout=10):
         time.sleep(1)
     return True
 
+def getImage(filepath):
+    obstacles.speed_up_video(filepath, "output.mp4", 5)
+    crowd.compute_reachability_map("output.mp4")
+    obstacles.compute_reachability_map("output.mp4")
+    
+    if hasattr(imagerendering_output, "main"):
+        imagerendering_output.main()  # Ensure that imagerendering_output has a main()
 
-#TODO VEry important to speed up
-obstacles.speed_up_video("dice_original.mp4","output.mp4",5)
+def djikstra(pointFile):
+    with open(pointFile, "r", newline="\n") as f:
+        data = f.readlines()
 
+    # Convert the first and last lines into (float, float) tuples
+    start = data[0].split(",")
+    end = data[-1].split(",")
+    start = (float(start[0]), float(start[-1].strip()))
+    end = (float(end[0]), float(end[-1].strip()))
 
-# start = time.time()
-# Step 1: Run crowd.py
-# # before  = time.time()
-crowd.compute_reachability_map("output.mp4")
-# # print(time.time() - before)
-# # before  = time.time()
-if not wait_for_file("final_reachability_map.png"):
-    exit()
-# # print(time.time() - before)
+    image = cv2.imread("final_overlay.jpg")
+    if image is None:
+        print("Error: final_overlay.jpg not found or unreadable.")
+        return None
 
-# Step 2: Run obstacles.py
-# Ensure final_reachability_map.png is created before proceeding
-print("Running obstacles.py to generate final_reachability_map.png...")
-obstacles.compute_reachability_map("output.mp4")
-# # before  = time.time()
-print("Running crowd.py to generate final_reachability_map_white.png...")
+    path = wg.returnPath(image, start, end)
+    print(path)
+    return path
 
-# Ensure final_reachability_map_white.png is created before proceeding
-# # before  = time.time()
-if not wait_for_file("final_reachability_map_white.png"):
-    exit()
-# # print(time.time() - before)
+def isNewFileAdded(directory, prev_files):
+    """Returns a set of new files and the current set of files."""
+    current_files = set(os.listdir(directory))
+    new_files = current_files - prev_files
+    return new_files, current_files
 
-# Step 3: Run imagerendering_output.py
-# # before  = time.time()
-print("Running imagerendering_output.py for final processing...")
-if hasattr(imagerendering_output, "main"):
-    imagerendering_output.main()  # Make sure `main()` exists in imagerendering_output.py
-else:
-    print("Error: `imagerendering_output.py` does not have a `main()` function.")
+def enforce_file_limit(directory, max_files=3):
+    """
+    Checks the files in the directory and removes the oldest files
+    if the number exceeds max_files.
+    """
+    # Build full paths for only files in the directory.
+    files = [os.path.join(directory, f) for f in os.listdir(directory)
+             if os.path.isfile(os.path.join(directory, f))]
+    
+    if len(files) > max_files:
+        files.sort(key=lambda x: os.path.getctime(x))  # Oldest first
+        num_to_remove = len(files) - max_files
+        for i in range(num_to_remove):
+            try:
+                os.remove(files[i])
+                print(f"Removed oldest file: {files[i]}")
+            except Exception as e:
+                print(f"Error removing file {files[i]}: {e}")
 
-# # print(time.time() - before)
+def main():
+    run = True
+    count = 0
+    prev_files = set(os.listdir(directory))  # Initial snapshot
 
-print("✅ Processing complete! The final image should be generated, in ."+str(time.time()-start))
+    while run:
+        if count == 0:
+            if prev_files:
+                # Process the first file from the initial snapshot.
+                first_file = list(prev_files)[0]
+                print(f"Processing initial file: {first_file}")
+                getImage(os.path.join(directory, first_file))
+                djikstra("/Users/saumya/Desktop/hackedproject/HackED2025/Model/reference_points.txt")
+            else:
+                print("No initial files found in the directory.")
+        else:
+            new_files, prev_files = isNewFileAdded(directory, prev_files)
+            if new_files:  # Only proceed if a new file is detected.
+                new_file = list(new_files)[0]
+                print(f"New file detected: {new_file}")
+                getImage(os.path.join(directory, new_file))
+                djikstra("/Users/saumya/Desktop/hackedproject/HackED2025/Model/reference_points.txt")
+                
+                # Enforce the maximum file count.
+                enforce_file_limit(directory, MAX_FILES)
+        
+        count += 1
+        time.sleep(1)  # Slight delay to avoid busy looping
+
+    # Cleanup generated files when done.
+    cleanup_files = [
+        "output2.jpg", "output.mp4",
+        "final_reachability_map_white.png", "final_reachability_map.png"
+    ]
+    for file in cleanup_files:
+        if os.path.exists(file):
+            os.remove(file)
+
+if __name__ == "__main__":
+    main()
