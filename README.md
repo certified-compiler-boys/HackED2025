@@ -21,7 +21,7 @@ CrowdNav is an application that analyzes crowd movement using live recordings an
    ```
 3. Run the application:
    ```bash
-   python main.py
+   python Model/main.py
    ```
 
 ## Usage
