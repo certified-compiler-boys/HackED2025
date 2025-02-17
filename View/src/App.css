@@ -186,9 +186,9 @@ select:focus, .video-container:hover, .plot-container:hover, .selected-points:ho
     font-size: 16px;
   }
 }
-/* init: styling for the start page, motherfucker, let's make it look dope */
+/* init: styling for the start page*/
 
-/* init: style the header, fuck yeah, make it bold */
+/* init: style the header*/
 .start-page h1 {
   font-size: 3rem;
   margin-bottom: 20px;
@@ -213,7 +213,7 @@ select:focus, .video-container:hover, .plot-container:hover, .selected-points:ho
   transition: background-color 0.3s ease, transform 0.3s ease;
 }
 
-/* init: hover effect for the button, you fucking legend */
+/* init: hover effect for the button*/
 .start-page button:hover {
   background-color: rgba(255, 255, 255, 0.5);
   transform: scale(1.05);
@@ -224,7 +224,7 @@ select:focus, .video-container:hover, .plot-container:hover, .selected-points:ho
   transform: scale(0.95);
 }
 
-/* init: responsive tweaks, no bullshit on small screens */
+/* init: responsive tweaks*/
 @media (max-width: 768px) {
   .start-page h1 {
     font-size: 2.5rem;
