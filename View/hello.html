@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sexy Curvy Arrow Animation</title>
+    <style>
+        body { background: black; display: flex; justify-content: center; align-items: center; height: 100vh; }
+        canvas { background: rgba(0, 0, 0, 0.9); border: 2px solid limegreen; }
+    </style>
+</head>
+<body>
+    <canvas id="animationCanvas"></canvas>
+    <script>
+        const canvas = document.getElementById("animationCanvas");
+        const ctx = canvas.getContext("2d");
+
+        canvas.width = 640;
+        canvas.height = 480;
+
+        let smoothPoints = null;
+        let progress = 0;
+
+        function generateBezierPoints(points) {
+            const smoothPath = [];
+            for (let i = 0; i < points.length - 1; i++) {
+                const p0 = points[i];
+                const p1 = points[i + 1];
+                const midX = (p0[0] + p1[0]) / 2;
+                const midY = (p0[1] + p1[1]) / 2;
+                smoothPath.push(p0, [midX, midY]);
+            }
+            smoothPath.push(points[points.length - 1]);
+            return smoothPath;
+        }
+
+        function drawGlowTrail(ctx, points, progress) {
+            ctx.globalAlpha = 0.4;
+            for (let i = 0; i < progress; i++) {
+                ctx.beginPath();
+                ctx.arc(points[i][0], points[i][1], 5, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(0, 255, 0, ${(i / progress)}`;
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+        }
+
+        function drawArrow(ctx, x, y, angle) {
+            ctx.save();
+            ctx.translate(x, y);
+            ctx.rotate(angle);
+            ctx.beginPath();
+            ctx.moveTo(-10, -5);
+            ctx.lineTo(10, 0);
+            ctx.lineTo(-10, 5);
+            ctx.closePath();
+            ctx.fillStyle = "limegreen";
+            ctx.fill();
+            ctx.restore();
+        }
+
+        function animate() {
+            if (!smoothPoints) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw smooth curve
+            ctx.beginPath();
+            ctx.moveTo(smoothPoints[0][0], smoothPoints[0][1]);
+            for (let i = 1; i < smoothPoints.length; i++) {
+                ctx.lineTo(smoothPoints[i][0], smoothPoints[i][1]);
+            }
+            ctx.strokeStyle = "limegreen";
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            drawGlowTrail(ctx, smoothPoints, progress);
+
+            if (progress < smoothPoints.length - 1) {
+                const [x1, y1] = smoothPoints[progress];
+                const [x2, y2] = smoothPoints[progress + 1];
+                const angle = Math.atan2(y2 - y1, x2 - x1);
+                drawArrow(ctx, x1, y1, angle);
+                progress++;
+            } else {
+                progress = 0;
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        // Load points from external text file
+        fetch('/Users/saumya/Desktop/hackedproject/HackED2025/View/output.txt')
+            .then(response => response.text())
+            .then(text => {
+                const lines = text.trim().split('\n');
+                const points = lines.map(line => {
+                    const [x, y] = line.split(',').map(Number);
+                    return [x, y];
+                }).filter(([x, y]) => !isNaN(x) && !isNaN(y));
+
+                const mappedPoints = points.map(([x, y]) => [
+                    x / 100 * canvas.width,
+                    y / 100 * canvas.height
+                ]);
+                
+                smoothPoints = generateBezierPoints(mappedPoints);
+                animate();
+            })
+            .catch(error => console.error('Error loading points:', error));
+    </script>
+</body>
+</html>

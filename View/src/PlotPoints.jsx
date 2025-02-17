@@ -127,18 +127,17 @@ const PlotPoints = ({ onPointsSelected, presetImage }) => {
 
     return (
         <div
-            style={{
-                width: "90%",
-                height: "500px",  // Increase height to make space for the button
-                border: "2px dashed gray",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                justifyContent: "flex-start",  // Align items at the top
-                cursor: "pointer",
-                overflow: "hidden",  
-                paddingBottom: "20px",  // Add padding at the bottom
-            }}
+        style={{
+            width: "640px",
+            height: "480px",  // Fixed width and height for the container
+            border: "2px dashed gray",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "flex-start",  // Align items at the top
+            cursor: "pointer",
+            overflow: "hidden",  // Ensure content doesn't overflow
+        }}
         >
             {!image ? (
                 <>
@@ -169,6 +168,7 @@ const PlotPoints = ({ onPointsSelected, presetImage }) => {
             ) : (
                 <>
                     <canvas
+                        className="cursor"
                         ref={canvasRef}
                         onClick={handleClick}
                         style={{ cursor: "crosshair", marginBottom: "20px" }}  // Add margin below canvas
@@ -182,7 +182,7 @@ const PlotPoints = ({ onPointsSelected, presetImage }) => {
                                 backgroundColor: "#ff0000",
                                 color: "#ffffff",
                                 border: "none",
-                                borderRadius: "6px",
+                                borderRadius: "16px",
                                 cursor: "pointer",
                                 fontSize: "16px",
                                 boxShadow: "0 0 10px rgba(255, 0, 0, 0.5)",

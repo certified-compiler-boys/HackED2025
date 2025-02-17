@@ -6,7 +6,7 @@ import cv2
 def main():
     pathTest = "final_reachability_map.png"
     original = cv2.imread(pathTest)
-
+    
     if original is None:
         print("Error: Could not load final_reachability_map.png. Check the file path.")
         exit()

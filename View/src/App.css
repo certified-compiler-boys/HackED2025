@@ -90,7 +90,15 @@ select:hover {
   height: auto;
   border-radius: 12px;
 }
-
+.path-animation-canvas {
+    width: 640px;
+    height: 360px;
+    top: -40%;
+    left: 3%;
+    position: relative;
+    pointer-events: none;
+    transform: scale(1.0);
+}
 /* Selected Points Display */
 .selected-points {
   background-color: #333; /* Slightly lighter gray */

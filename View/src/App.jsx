@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import PlotPoints from "./PlotPoints";
 import "./App.css";
+import PathAnimation from "./PathAnimation";
 
 const App = () => {
     const videoRef = useRef(null);
@@ -90,23 +91,38 @@ const App = () => {
     };
 
     const saveVideo = () => {
-        if (!chunksRef.current.length || !mediaRecorderRef.current) return;
-        
+        if (!chunksRef.current.length || !mediaRecorderRef.current) return;    
         const blob = new Blob(chunksRef.current, { type: mediaRecorderRef.current.mimeType });
         const url = URL.createObjectURL(blob);
         const ext = mediaRecorderRef.current.mimeType.split('/')[1].split(';')[0];
-
         const a = document.createElement("a");
         a.href = url;
         a.download = `video_${Date.now()}.${ext}`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-
         if (videoRef.current?.srcObject) startRecording(videoRef.current.srcObject);
     };
+    const [jsonDataExists, setJsonDataExists] = useState(false);
+
+    useEffect(() => {
+        fetch("/output2.json")
+            .then((res) => res.json())
+            .then((data) => {
+                if (data && Object.keys(data).length > 0) {
+                    setJsonDataExists(true);
+                } else {
+                    setJsonDataExists(false);
+                }
+            })
+            .catch((err) => {
+                console.error("Error loading JSON:", err);
+                setJsonDataExists(false);
+            });
+    }, []);
     
 return (
+    <div>
     <div className="grid-container">
         <div className="video-container">
             <h2>Webcam Feed (Auto Recording 15s Clips)</h2>
@@ -124,16 +140,12 @@ return (
         <div className="plot-container">
             <h2>Plot Points on Image</h2>
             <PlotPoints onPointsSelected={setSelectedPoints} presetImage={capturedFrame} />
+            <PathAnimation jsonPath="/output2.json" className="animated" />
             <p className="selected-points">Selected Points: {JSON.stringify(selectedPoints)}</p>
         </div>
+    </div>
     </div>
 );
 };
 
 export default App;
-
-    
-
-    // ----------------- END FLASK CONNECTION -----------------
-
-

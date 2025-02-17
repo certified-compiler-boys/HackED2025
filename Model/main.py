@@ -5,6 +5,7 @@ import crowd
 import imagerendering_output
 import weighted_graph as wg
 import cv2
+import json
 
 MAX_FILES = 3
 directory = "/Users/saumya/Desktop/hackedproject/HackED2025/Model/videos"
@@ -43,7 +44,14 @@ def djikstra(pointFile):
         return None
 
     path = wg.returnPath(image, start, end)
-    print(path)
+    dir_path = "/Users/saumya/Desktop/hackedproject/HackED2025/View/public"
+    file_path = os.path.join(dir_path, "output2.json")
+    path_json = {"points": path}  
+
+    with open(file_path, "w") as write:
+        json.dump(path_json, write, indent=4)  # pretty print for readability
+
+    print("Path saved to output.json:", path_json)
     return path
 
 def isNewFileAdded(directory, prev_files):

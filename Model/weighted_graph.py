@@ -94,7 +94,7 @@ def returnPath(image,start,goal):
     for point in (path):
         xc = point[0]*100
         yc = point[1]*100
-        new_path.append((xc/width, yc/height))
+        new_path.append([xc/width, yc/height])
     return new_path
 
 def clamp(x,min,max):
